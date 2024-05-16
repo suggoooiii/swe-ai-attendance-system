@@ -54,9 +54,17 @@ def mark_attendance(name):
 # Start the video capture
 video_capture = cv2.VideoCapture(0)
 
+if not video_capture.isOpened():
+    print("Error: Could not open video capture")
+    exit()
+
 while True:
     # Grab a single frame of video
     ret, frame = video_capture.read()
+
+    if not ret:
+        print("Failed to grab frame")
+        break
 
     # Resize frame for faster processing
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
