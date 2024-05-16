@@ -24,17 +24,24 @@ CREATE TABLE IF NOT EXISTS attendance (
 ''')
 conn.commit()
 
-# Load registered users' images and learn their encodings
-known_face_encodings = []
-known_face_names = []
+# Function to load registered users' images and learn their encodings
+def load_registered_users():
+    known_face_encodings = []
+    known_face_names = []
 
-for filename in os.listdir(registered_images_path):
-    if filename.endswith('.jpg') or filename.endswith('.png'):
-        img_path = os.path.join(registered_images_path, filename)
-        img = face_recognition.load_image_file(img_path)
-        img_encoding = face_recognition.face_encodings(img)[0]
-        known_face_encodings.append(img_encoding)
-        known_face_names.append(os.path.splitext(filename)[0])
+    for filename in os.listdir(registered_images_path):
+        if filename.endswith('.jpg') or filename.endswith('.png'):
+            img_path = os.path.join(registered_images_path, filename)
+            img = face_recognition.load_image_file(img_path)
+            img_encodings = face_recognition.face_encodings(img)
+            if img_encodings:
+                known_face_encodings.append(img_encodings[0])
+                known_face_names.append(os.path.splitext(filename)[0])
+    
+    return known_face_encodings, known_face_names
+
+# Load registered users' images and learn their encodings
+known_face_encodings, known_face_names = load_registered_users()
 
 # Initialize some variables
 face_locations = []
@@ -51,6 +58,15 @@ def mark_attendance(name):
     ''', (name, date_str, time_str))
     conn.commit()
 
+def register_new_user(frame, name):
+    # Save the frame as a new user's image
+    img_path = os.path.join(registered_images_path, f"{name}.jpg")
+    cv2.imwrite(img_path, frame)
+
+    # Reload registered users
+    global known_face_encodings, known_face_names
+    known_face_encodings, known_face_names = load_registered_users()
+
 # Start the video capture
 video_capture = cv2.VideoCapture(0)
 
@@ -62,7 +78,7 @@ while True:
     # Grab a single frame of video
     ret, frame = video_capture.read()
 
-    if not ret:
+    if not ret or frame is None:
         print("Failed to grab frame")
         break
 
@@ -110,6 +126,12 @@ while True:
 
     # Display the resulting image
     cv2.imshow('Video', frame)
+
+    # Check for user input to register a new user
+    if cv2.waitKey(1) & 0xFF == ord('r'):
+        new_user_name = input("Enter the name of the new user: ")
+        register_new_user(frame, new_user_name)
+        print(f"New user {new_user_name} registered.")
 
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):
