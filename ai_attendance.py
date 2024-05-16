@@ -3,10 +3,26 @@ import cv2
 import numpy as np
 import os
 import datetime
+import sqlite3
 
 # Path to the directory containing registered users' images
 registered_images_path = 'registered_users/'
-attendance_log_path = 'attendance_log.csv'
+db_path = 'attendance.db'
+
+# Initialize and connect to the database
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+
+# Create the attendance table if it doesn't exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL
+)
+''')
+conn.commit()
 
 # Load registered users' images and learn their encodings
 known_face_encodings = []
@@ -26,17 +42,14 @@ face_encodings = []
 face_names = []
 process_this_frame = True
 
-# Open the attendance log file
-if not os.path.isfile(attendance_log_path):
-    with open(attendance_log_path, 'w') as f:
-        f.write('Name,Date,Time\n')
-
 def mark_attendance(name):
     current_time = datetime.datetime.now()
     date_str = current_time.strftime("%Y-%m-%d")
     time_str = current_time.strftime("%H:%M:%S")
-    with open(attendance_log_path, 'a') as f:
-        f.write(f'{name},{date_str},{time_str}\n')
+    cursor.execute('''
+    INSERT INTO attendance (name, date, time) VALUES (?, ?, ?)
+    ''', (name, date_str, time_str))
+    conn.commit()
 
 # Start the video capture
 video_capture = cv2.VideoCapture(0)
@@ -97,3 +110,6 @@ while True:
 # Release handle to the webcam
 video_capture.release()
 cv2.destroyAllWindows()
+
+# Close the database connection
+conn.close()
