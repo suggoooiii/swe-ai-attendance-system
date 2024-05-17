@@ -75,12 +75,34 @@ if not video_capture.isOpened():
     exit()
 
 while True:
-    # Grab a single frame of video
-    ret, frame = video_capture.read()
-
-    if not ret or frame is None:
-        print("Failed to grab frame")
+    user_input = input("Enter 'r' to register a new user, 'c' to start attendance tracking, or 'q' to quit: ")
+    
+    if user_input == 'r':
+        new_user_name = input("Enter the name of the new user: ")
+        ret, frame = video_capture.read()
+        if ret and frame is not None:
+            register_new_user(frame, new_user_name)
+            print(f"New user {new_user_name} registered.")
+        else:
+            print("Failed to capture frame for user registration.")
+    
+    elif user_input == 'c':
         break
+    
+    elif user_input == 'q':
+        video_capture.release()
+        cv2.destroyAllWindows()
+        conn.close()
+        exit()
+    
+    else:
+        
+        # Grab a single frame of video
+        ret, frame = video_capture.read()
+        print("Invalid input. Please try again.")
+        if not ret or frame is None:
+            print("Failed to grab frame")
+            break
 
     # Resize frame for faster processing
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
@@ -135,7 +157,7 @@ while True:
 
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+            break
 
 # Release handle to the webcam
 video_capture.release()
