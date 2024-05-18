@@ -82,14 +82,24 @@ const WebcamCapture = ({ fetchAttendees }) => {
 
       const formData = new FormData();
       formData.append("file", blob, "image.jpg");
-      formData.append("name", name);
 
-      const response = await axios.post(
-        "http://127.0.0.1:5000/register",
+      // First, upload the image
+      const uploadResponse = await axios.post(
+        "http://127.0.0.1:5000/upload",
         formData
       );
+      const filePath = uploadResponse.data.file_path;
 
-      if (response.data.status === "Registration Successful") {
+      // Then, register the face using the uploaded image file path
+      const registerResponse = await axios.post(
+        "http://127.0.0.1:5000/register",
+        {
+          file_path: filePath,
+          name: name,
+        }
+      );
+
+      if (registerResponse.data.status === "Registration Successful") {
         toast({
           title: "Registration Successful",
           description: `Welcome, ${name}`,
@@ -102,7 +112,7 @@ const WebcamCapture = ({ fetchAttendees }) => {
       } else {
         toast({
           title: "Error",
-          description: response.data.error,
+          description: registerResponse.data.error,
           status: "error",
           duration: 5000,
           isClosable: true,
