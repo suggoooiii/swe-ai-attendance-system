@@ -4,8 +4,12 @@ import cv2
 import numpy as np
 import sqlite3
 import os
+from werkzeug.utils import secure_filename
+import base64
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -70,6 +74,36 @@ def register_face():
             return jsonify({"status": "Registration Successful"})
         else:
             return jsonify({"error": "No face detected"})
+        
+@app.route('/verify_identity', methods=['POST'])
+def verify_identity():
+    if 'image' not in request.json:
+        print(request.json)
+        return jsonify({"error": "No image provided"})
+    
+    image_data = request.json['image'].split(',')[1]
+    print('its working the image is in request,')
+    image_data = base64.b64decode(image_data)
+    np_array = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+
+    face_encodings = face_recognition.face_encodings(image)
+
+    if len(face_encodings) > 0:
+        face_encoding = face_encodings[0]
+        conn = get_db_connection()
+        known_faces = conn.execute('SELECT * FROM faces').fetchall()
+        conn.close()
+
+        for known_face in known_faces:
+            known_face_encoding = np.frombuffer(known_face['encoding'], dtype=np.float64)
+            matches = face_recognition.compare_faces([known_face_encoding], face_encoding)
+            if True in matches:
+                return jsonify({"status": "Identity Verified", "name": known_face['name']})
+
+        return jsonify({"status": "Identity Not Verified"})
+    else:
+        return jsonify({"error": "No face detected"})
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -9,6 +9,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { AttendanceCard } from "./components";
+import WebcamCapture from "./components/WebcamCapture";
 function App() {
   const attendees = [
     { name: "John Doe", status: "Present" },
@@ -48,6 +49,9 @@ function App() {
             status={attendee.status}
           />
         ))}
+      </Flex>
+      <Flex>
+        <WebcamCapture />
       </Flex>
     </Box>
   );
