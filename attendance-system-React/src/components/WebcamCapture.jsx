@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { Box, Button } from "@chakra-ui/react";
+import { Box, Button, Input, useToast } from "@chakra-ui/react";
 import axios from "axios";
 
 const WebcamCapture = () => {
   const webcamRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
-  console.log("🚀 ~ WebcamCapture ~ imgSrc:", imgSrc);
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [name, setName] = useState("");
+  const toast = useToast();
 
   const videoConstraints = {
     width: 220,
@@ -23,21 +25,99 @@ const WebcamCapture = () => {
         "http://127.0.0.1:5000/verify_identity",
         {
           image: imageSrc,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          student_id: "20227232",
         }
       );
 
-      console.log(response.data);
-      // Handle the response from the backend
-      // You can update the UI or show a message based on the response
+      if (response.data.status === "Identity Verified") {
+        toast({
+          title: "Identity Verified",
+          description: `Welcome, ${response.data.name}`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      } else if (response.data.status === "Identity Not Verified") {
+        toast({
+          title: "Identity Not Verified",
+          description: "Please proceed with registration.",
+          status: "warning",
+          duration: 5000,
+          isClosable: true,
+        });
+        setShowRegistration(true);
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.error,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     } catch (error) {
       console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while verifying identity.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
+
+  const register = async () => {
+    try {
+      // Convert base64 image to Blob
+      const byteString = atob(imgSrc.split(",")[1]);
+      const mimeString = imgSrc.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: mimeString });
+
+      const formData = new FormData();
+      formData.append("file", blob, "image.jpg");
+      formData.append("name", name);
+
+      const response = await axios.post(
+        "http://127.0.0.1:5000/register",
+        formData
+      );
+
+      if (response.data.status === "Registration Successful") {
+        toast({
+          title: "Registration Successful",
+          description: `Welcome, ${name}`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        setShowRegistration(false);
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.error,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred during registration.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <Box>
       <Webcam
@@ -49,6 +129,18 @@ const WebcamCapture = () => {
         screenshotFormat="image/jpeg"
       />
       <Button onClick={capture}>Capture photo</Button>
+      {showRegistration && (
+        <Box mt={4}>
+          <Input
+            placeholder="Enter your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Button onClick={register} mt={2}>
+            Register
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
