@@ -1,9 +1,10 @@
+/* eslint-disable react/prop-types */
 import { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { Box, Button, Input, useToast } from "@chakra-ui/react";
 import axios from "axios";
 
-const WebcamCapture = () => {
+const WebcamCapture = ({ fetchAttendees }) => {
   const webcamRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
@@ -36,6 +37,7 @@ const WebcamCapture = () => {
           duration: 5000,
           isClosable: true,
         });
+        fetchAttendees(); // Fetch attendees after successful verification
       } else if (response.data.status === "Identity Not Verified") {
         toast({
           title: "Identity Not Verified",
@@ -96,6 +98,7 @@ const WebcamCapture = () => {
           isClosable: true,
         });
         setShowRegistration(false);
+        fetchAttendees(); // Fetch attendees after successful registration
       } else {
         toast({
           title: "Error",
