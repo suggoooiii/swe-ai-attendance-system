@@ -25,7 +25,6 @@ const WebcamCapture = () => {
         "http://127.0.0.1:5000/verify_identity",
         {
           image: imageSrc,
-          student_id: "20227232",
         }
       );
 

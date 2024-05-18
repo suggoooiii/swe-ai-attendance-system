@@ -1,5 +1,4 @@
 import "./App.css";
-// import CheckIn from "./components/Checkin";
 import {
   Box,
   Flex,
@@ -10,27 +9,29 @@ import {
 } from "@chakra-ui/react";
 import { AttendanceCard } from "./components";
 import WebcamCapture from "./components/WebcamCapture";
+import { useEffect, useState } from "react";
+import axios from "axios";
 function App() {
-  const attendees = [
-    { name: "John Doe", status: "Present" },
-    { name: "Jane Smith", status: "Absent" },
-    { name: "Alice Johnson", status: "Present" },
-    { name: "Bob Williams", status: "Present" },
-    { name: "Emily Davis", status: "Absent" },
-    { name: "Michael Brown", status: "Present" },
-    { name: "Sarah Wilson", status: "Present" },
-    { name: "David Taylor", status: "Absent" },
-    { name: "Olivia Anderson", status: "Present" },
-    { name: "James Martinez", status: "Absent" },
-    { name: "Sophia Thomas", status: "Present" },
-    { name: "Daniel Hernandez", status: "Present" },
-    { name: "Mia Moore", status: "Absent" },
-    { name: "Jacob Martin", status: "Present" },
-    { name: "Isabella Jackson", status: "Present" },
-  ];
+  const [attendees, setAttendees] = useState([]);
+  console.log("🚀 ~ App ~ attendees:", attendees);
+
   const { toggleColorMode } = useColorMode();
   const bg = useColorModeValue("gray.100", "gray.900");
   const color = useColorModeValue("black", "white");
+
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:5000/attendees");
+        console.log("🚀 ~ fetchAttendees ~ response:", response);
+        setAttendees(response.data);
+      } catch (error) {
+        console.error("Error fetching attendees:", error);
+      }
+    };
+
+    fetchAttendees();
+  }, []);
   return (
     <Box bg={bg} color={color} minH="100vh" p={4}>
       <Flex justify="space-between" align="center" mb={8}>

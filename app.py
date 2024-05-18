@@ -119,7 +119,6 @@ def verify_identity():
         logging.debug('Image data: %s', image_data)
         np_array = np.frombuffer(image_data, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-        print('image', image)
 
         face_encodings = face_recognition.face_encodings(image)
         if len(face_encodings) > 0:
@@ -128,24 +127,18 @@ def verify_identity():
             known_faces = conn.execute('SELECT * FROM faces').fetchall()
             logging.debug('Known faces: %s', known_faces)
 
-            matches = face_recognition.compare_faces(
-                [np.frombuffer(known_face['encoding'], dtype=np.float64) for known_face in known_faces],
-                face_encoding
-            )
+            for known_face in known_faces:
+                known_face_encoding = np.frombuffer(known_face['encoding'], dtype=np.float64)
+                matches = face_recognition.compare_faces([known_face_encoding], face_encoding)
+                if True in matches:
+                    student_name = known_face['name']
+                    conn.execute('INSERT INTO attendance (name, status, date_time) VALUES (?, ?, datetime("now"))', (student_name, "Present"))
+                    conn.commit()
+                    conn.close()
+                    return jsonify({"status": "Identity Verified", "name": student_name})
 
-            if True in matches:
-                matched_index = matches.index(True)
-                student_name = known_faces[matched_index]['name']
-                
-                # Mark attendance
-                conn.execute('INSERT INTO attendance (name, date_time) VALUES (?, datetime("now"))', (student_name,))
-                conn.commit()
-                conn.close()
-                
-                return jsonify({"status": "Identity Verified", "name": student_name})
-            else:
-                conn.close()
-                return jsonify({"status": "Identity Not Verified"})
+            conn.close()
+            return jsonify({"status": "Identity Not Verified"})
         else:
             return jsonify({"error": "No face detected"})
     except Exception as e:
