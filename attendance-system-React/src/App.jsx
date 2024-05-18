@@ -10,6 +10,23 @@ import {
 } from "@chakra-ui/react";
 import { AttendanceCard } from "./components";
 function App() {
+  const attendees = [
+    { name: "John Doe", status: "Present" },
+    { name: "Jane Smith", status: "Absent" },
+    { name: "Alice Johnson", status: "Present" },
+    { name: "Bob Williams", status: "Present" },
+    { name: "Emily Davis", status: "Absent" },
+    { name: "Michael Brown", status: "Present" },
+    { name: "Sarah Wilson", status: "Present" },
+    { name: "David Taylor", status: "Absent" },
+    { name: "Olivia Anderson", status: "Present" },
+    { name: "James Martinez", status: "Absent" },
+    { name: "Sophia Thomas", status: "Present" },
+    { name: "Daniel Hernandez", status: "Present" },
+    { name: "Mia Moore", status: "Absent" },
+    { name: "Jacob Martin", status: "Present" },
+    { name: "Isabella Jackson", status: "Present" },
+  ];
   const { toggleColorMode } = useColorMode();
   const bg = useColorModeValue("gray.100", "gray.900");
   const color = useColorModeValue("black", "white");
@@ -24,9 +41,13 @@ function App() {
         </Button>
       </Flex>
       <Flex wrap="wrap" spacing={4}>
-        <AttendanceCard name="John Doe" status="Present" />
-        <AttendanceCard name="Jane Smith" status="Absent" />
-        <AttendanceCard name="Alice Johnson" status="Present" />
+        {attendees.map((attendee, index) => (
+          <AttendanceCard
+            key={index}
+            name={attendee.name}
+            status={attendee.status}
+          />
+        ))}
       </Flex>
     </Box>
   );
