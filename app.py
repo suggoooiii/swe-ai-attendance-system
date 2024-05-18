@@ -26,11 +26,21 @@ def init_db():
         conn.execute('''CREATE TABLE IF NOT EXISTS attendance
                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
                          name TEXT NOT NULL,
+                         status TEXT NOT NULL,
                          date_time TEXT NOT NULL)''')
 
 @app.before_first_request
 def initialize_database():
     init_db()
+    
+@app.route('/attendees', methods=['GET'])
+def get_attendees():
+    conn = get_db_connection()
+    attendees = conn.execute('SELECT name, status FROM attendance').fetchall()
+    conn.close()
+    
+    attendees_list = [{"name": attendee["name"], "status": attendee["status"]} for attendee in attendees]
+    return jsonify(attendees_list)
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
