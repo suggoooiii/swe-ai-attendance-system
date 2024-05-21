@@ -12,6 +12,8 @@ import logging
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+logging.basicConfig(level=logging.DEBUG)
+
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
@@ -32,15 +34,6 @@ def init_db():
 @app.before_first_request
 def initialize_database():
     init_db()
-    
-@app.route('/attendees', methods=['GET'])
-def get_attendees():
-    conn = get_db_connection()
-    attendees = conn.execute('SELECT name, status FROM attendance').fetchall()
-    conn.close()
-    
-    attendees_list = [{"name": attendee["name"], "status": attendee["status"]} for attendee in attendees]
-    return jsonify(attendees_list)
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -59,8 +52,7 @@ def upload_image():
         
         file.save(file_path)
         return jsonify({"status": "File uploaded", "file_path": file_path})
-    
-    
+
 @app.route('/register', methods=['POST'])
 def register_face():
     if 'file_path' not in request.json or 'name' not in request.json:
@@ -81,6 +73,7 @@ def register_face():
         return jsonify({"status": "Registration Successful"})
     else:
         return jsonify({"error": "No face detected"})
+
 @app.route('/verify_identity', methods=['POST'])
 def verify_identity():
     data = request.json
@@ -119,6 +112,15 @@ def verify_identity():
     except Exception as e:
         logging.error("Error processing image data: %s", e)
         return jsonify({"error": "Error processing image data"}), 500
+
+@app.route('/attendees', methods=['GET'])
+def get_attendees():
+    conn = get_db_connection()
+    attendees = conn.execute('SELECT name, status FROM attendance').fetchall()
+    conn.close()
+    
+    attendees_list = [{"name": attendee["name"], "status": attendee["status"]} for attendee in attendees]
+    return jsonify(attendees_list)
 
 if __name__ == '__main__':
     app.run(debug=True)

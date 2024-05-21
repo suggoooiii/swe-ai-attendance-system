@@ -9,6 +9,7 @@ const WebcamCapture = ({ fetchAttendees }) => {
   const [imgSrc, setImgSrc] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [name, setName] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const toast = useToast();
 
   const videoConstraints = {
@@ -17,9 +18,18 @@ const WebcamCapture = ({ fetchAttendees }) => {
     facingMode: "user",
   };
 
+  const openCamera = () => {
+    setCameraOpen(true);
+  };
+
+  const closeCamera = () => {
+    setCameraOpen(false);
+  };
+
   const capture = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
     setImgSrc(imageSrc);
+    closeCamera();
 
     try {
       const response = await axios.post(
@@ -132,19 +142,28 @@ const WebcamCapture = ({ fetchAttendees }) => {
 
   return (
     <Box>
-      <Webcam
-        ref={webcamRef}
-        height={240}
-        width={350}
-        audio={false}
-        videoConstraints={videoConstraints}
-        screenshotFormat="image/jpeg"
-      />
-      <Button onClick={capture}>Capture photo</Button>
+      {!cameraOpen && <Button onClick={openCamera}>Open Camera</Button>}
+      {cameraOpen && (
+        <Box>
+          <Webcam
+            ref={webcamRef}
+            height={240}
+            width={350}
+            audio={false}
+            videoConstraints={videoConstraints}
+            screenshotFormat="image/jpeg"
+          />
+          <Button onClick={capture} disabled={!cameraOpen}>
+            Verify Identity
+          </Button>
+          <Button onClick={closeCamera}>Close Camera</Button>
+        </Box>
+      )}
       {showRegistration && (
         <Box mt={4}>
           <Input
             placeholder="Enter your name"
+            type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
