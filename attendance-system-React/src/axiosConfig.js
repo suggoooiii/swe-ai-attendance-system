@@ -28,11 +28,15 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem("refreshToken");
       if (refreshToken) {
-        const response = await axios.post("/refresh", { refreshToken });
-        if (response.status === 200) {
-          localStorage.setItem("token", response.data.access_token);
-          originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
-          return axios(originalRequest);
+        try {
+          const response = await axios.post("/refresh", { refreshToken });
+          if (response.status === 200) {
+            localStorage.setItem("token", response.data.access_token);
+            originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
+            return axios(originalRequest);
+          }
+        } catch (err) {
+          console.error("Token refresh failed", err);
         }
       }
     }

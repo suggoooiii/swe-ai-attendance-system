@@ -1,7 +1,7 @@
 # app.py
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity, jwt_refresh_token_required
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
@@ -43,20 +43,20 @@ def login():
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/refresh', methods=['POST'])
-@jwt_refresh_token_required
+@jwt_required(refresh=True)
 def refresh():
     current_user = get_jwt_identity()
     new_access_token = create_access_token(identity=current_user)
     return jsonify(access_token=new_access_token)
 
 @app.route('/protected', methods=['GET'])
-@jwt_required
+@jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
 @app.route('/admin', methods=['GET'])
-@jwt_required
+@jwt_required()
 def admin():
     current_user = get_jwt_identity()
     if current_user['role'] != 'ADMIN':

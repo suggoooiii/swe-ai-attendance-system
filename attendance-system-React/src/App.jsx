@@ -62,6 +62,7 @@ function App() {
       console.error("Login failed");
     }
   };
+
   const register = async (username, password) => {
     try {
       await axios.post("/register", { username, password });
