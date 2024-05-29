@@ -27,6 +27,7 @@ import {
   Protected,
   Navigation,
   ManageUsers,
+  Admin,
 } from "./components";
 import axios from "./axiosConfig";
 
@@ -47,11 +48,11 @@ function App() {
   // const [name, setName] = useState("");
   // const [isRegistered, setIsRegistered] = useState(false);
   // const [isVerified, setIsVerified] = useState(false); // New state for verification status
-  // const [isCameraOpen, setIsCameraOpen] = useState(false); // New state for camera visibility
   const login = async (username, password) => {
     try {
       const response = await axios.post("/login", { username, password });
       localStorage.setItem("token", response.data.access_token);
+      localStorage.setItem("refreshToken", response.data.refresh_token);
       const tokenPayload = JSON.parse(
         atob(response.data.access_token.split(".")[1])
       );
@@ -71,6 +72,7 @@ function App() {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setAuth(false);
     setRole("");
   };

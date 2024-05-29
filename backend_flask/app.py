@@ -1,13 +1,15 @@
 # app.py
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity, jwt_refresh_token_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 900  # Access token expires in 15 minutes
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = 2592000  # Refresh token expires in 30 days
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
@@ -36,46 +38,30 @@ def login():
     user = User.query.filter_by(username=data['username']).first()
     if user and check_password_hash(user.password, data['password']):
         access_token = create_access_token(identity={'username': user.username, 'role': user.role.name})
-        return jsonify(access_token=access_token)
+        refresh_token = create_refresh_token(identity={'username': user.username, 'role': user.role.name})
+        return jsonify(access_token=access_token, refresh_token=refresh_token)
     return jsonify({"error": "Invalid credentials"}), 401
 
+@app.route('/refresh', methods=['POST'])
+@jwt_refresh_token_required
+def refresh():
+    current_user = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user)
+    return jsonify(access_token=new_access_token)
+
 @app.route('/protected', methods=['GET'])
-@jwt_required()
+@jwt_required
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
 @app.route('/admin', methods=['GET'])
-@jwt_required()
+@jwt_required
 def admin():
     current_user = get_jwt_identity()
     if current_user['role'] != 'ADMIN':
         return jsonify({"error": "Access forbidden"}), 403
     return jsonify(message="Welcome Admin"), 200
-
-@app.route('/users', methods=['GET'])
-@jwt_required()
-def get_users():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'ADMIN':
-        return jsonify({"error": "Access forbidden"}), 403
-    users = User.query.all()
-    user_list = [{'username': user.username, 'role': user.role.name} for user in users]
-    return jsonify(user_list), 200
-
-@app.route('/update_role', methods=['POST'])
-@jwt_required()
-def update_role():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'ADMIN':
-        return jsonify({"error": "Access forbidden"}), 403
-    data = request.get_json()
-    user = User.query.filter_by(username=data['username']).first()
-    if user:
-        user.role = Role[data['role'].upper()]
-        db.session.commit()
-        return jsonify({"message": "Role updated successfully"}), 200
-    return jsonify({"error": "User not found"}), 404
 
 if __name__ == '__main__':
     db.create_all()

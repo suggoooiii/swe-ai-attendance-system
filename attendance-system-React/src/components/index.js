@@ -7,6 +7,7 @@ import Home from "./Home";
 import About from "./About";
 import Navigation from "./Navigation";
 import ManageUsers from "./ManageUsers";
+import Admin from "./Admin";
 export {
   Checkin,
   AttendanceCard,
@@ -17,4 +18,5 @@ export {
   About,
   Navigation,
   ManageUsers,
+  Admin,
 };
