@@ -2,6 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
 app = Flask(__name__)
@@ -23,7 +24,8 @@ class User(db.Model):
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    new_user = User(username=data['username'], password=data['password'], role=Role.USER)
+    hashed_password = generate_password_hash(data['password'], method='sha256')
+    new_user = User(username=data['username'], password=hashed_password, role=Role.USER)
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message": "User registered successfully"}), 201
@@ -32,7 +34,7 @@ def register():
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data['username']).first()
-    if user and user.password == data['password']:
+    if user and check_password_hash(user.password, data['password']):
         access_token = create_access_token(identity={'username': user.username, 'role': user.role.name})
         return jsonify(access_token=access_token)
     return jsonify({"error": "Invalid credentials"}), 401
@@ -50,6 +52,30 @@ def admin():
     if current_user['role'] != 'ADMIN':
         return jsonify({"error": "Access forbidden"}), 403
     return jsonify(message="Welcome Admin"), 200
+
+@app.route('/users', methods=['GET'])
+@jwt_required()
+def get_users():
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'ADMIN':
+        return jsonify({"error": "Access forbidden"}), 403
+    users = User.query.all()
+    user_list = [{'username': user.username, 'role': user.role.name} for user in users]
+    return jsonify(user_list), 200
+
+@app.route('/update_role', methods=['POST'])
+@jwt_required()
+def update_role():
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'ADMIN':
+        return jsonify({"error": "Access forbidden"}), 403
+    data = request.get_json()
+    user = User.query.filter_by(username=data['username']).first()
+    if user:
+        user.role = Role[data['role'].upper()]
+        db.session.commit()
+        return jsonify({"message": "Role updated successfully"}), 200
+    return jsonify({"error": "User not found"}), 404
 
 if __name__ == '__main__':
     db.create_all()

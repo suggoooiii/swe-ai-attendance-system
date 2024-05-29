@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import {
   // ChakraProvider,
@@ -25,8 +25,8 @@ import {
   Home,
   About,
   Protected,
-  About,
   Navigation,
+  ManageUsers,
 } from "./components";
 import axios from "./axiosConfig";
 
@@ -69,14 +69,14 @@ function App() {
     }
   };
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("token");
-  };
-
   const logout = () => {
     localStorage.removeItem("token");
     setAuth(false);
     setRole("");
+  };
+
+  const isAuthenticated = () => {
+    return !!localStorage.getItem("token");
   };
 
   // const toast = useToast();
@@ -228,6 +228,16 @@ function App() {
             render={(props) =>
               isAuthenticated() && role === "ADMIN" ? (
                 <Admin {...props} />
+              ) : (
+                <Redirect to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/manage-users"
+            render={(props) =>
+              isAuthenticated() && role === "ADMIN" ? (
+                <ManageUsers {...props} />
               ) : (
                 <Redirect to="/login" />
               )

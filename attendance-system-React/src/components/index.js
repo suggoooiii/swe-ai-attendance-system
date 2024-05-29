@@ -6,6 +6,7 @@ import Protected from "./Protected";
 import Home from "./Home";
 import About from "./About";
 import Navigation from "./Navigation";
+import ManageUsers from "./ManageUsers";
 export {
   Checkin,
   AttendanceCard,
@@ -15,4 +16,5 @@ export {
   Home,
   About,
   Navigation,
+  ManageUsers,
 };
