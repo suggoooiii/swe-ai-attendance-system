@@ -19,23 +19,43 @@ import {
   Redirect,
 } from "react-router-dom";
 
-import { Register, Login, Home, About, Protected, About } from "./components";
+import {
+  Register,
+  Login,
+  Home,
+  About,
+  Protected,
+  About,
+  Navigation,
+} from "./components";
 import axios from "./axiosConfig";
 
 function App() {
   const webcamRef = useRef(null);
   const [auth, setAuth] = useState(false);
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+      setRole(tokenPayload.role);
+      setAuth(true);
+    }
+  }, []);
+
   // const [name, setName] = useState("");
   // const [isRegistered, setIsRegistered] = useState(false);
   // const [isVerified, setIsVerified] = useState(false); // New state for verification status
   // const [isCameraOpen, setIsCameraOpen] = useState(false); // New state for camera visibility
   const login = async (username, password) => {
     try {
-      const response = await axios.post("http://localhost:5000/login", {
-        username,
-        password,
-      });
+      const response = await axios.post("/login", { username, password });
       localStorage.setItem("token", response.data.access_token);
+      const tokenPayload = JSON.parse(
+        atob(response.data.access_token.split(".")[1])
+      );
+      setRole(tokenPayload.role);
       setAuth(true);
     } catch (error) {
       console.error("Login failed");
@@ -43,10 +63,7 @@ function App() {
   };
   const register = async (username, password) => {
     try {
-      await axios.post("http://localhost:5000/register", {
-        username,
-        password,
-      });
+      await axios.post("/register", { username, password });
     } catch (error) {
       console.error("Registration failed");
     }
@@ -59,6 +76,7 @@ function App() {
   const logout = () => {
     localStorage.removeItem("token");
     setAuth(false);
+    setRole("");
   };
 
   // const toast = useToast();
@@ -183,6 +201,7 @@ function App() {
   return (
     <>
       <Router>
+        <Navigation auth={auth} role={role} logout={logout} />
         <Switch>
           <Route path="/" exact component={Home} />
           <Route path="/about" component={About} />
@@ -199,6 +218,16 @@ function App() {
             render={(props) =>
               isAuthenticated() ? (
                 <Protected {...props} />
+              ) : (
+                <Redirect to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/admin"
+            render={(props) =>
+              isAuthenticated() && role === "ADMIN" ? (
+                <Admin {...props} />
               ) : (
                 <Redirect to="/login" />
               )

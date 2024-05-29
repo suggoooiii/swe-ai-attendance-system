@@ -1,6 +1,5 @@
-/* eslint-disable react/prop-types */
 // src/components/Login.js
-import { useState } from "react";
+import React, { useState } from "react";
 
 const Login = ({ login }) => {
   const [username, setUsername] = useState("");

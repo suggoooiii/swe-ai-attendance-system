@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
 // src/components/Register.js
 import React, { useState } from "react";
 
